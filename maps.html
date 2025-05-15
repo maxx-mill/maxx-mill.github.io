@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxx Millstein - Web Maps</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-bg);
+        }
+        
+        header {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--white);
+            text-decoration: none;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            display: flex;
+        }
+        
+        .nav-menu li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-menu a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-menu a:hover {
+            color: var(--primary-color);
+        }
+        
+        .active {
+            color: var(--primary-color) !important;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.5rem;
+        }
+        
+        section {
+            padding: 4rem 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2.2rem;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 1rem;
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: var(--primary-color);
+        }
+        
+        .intro {
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            text-align: center;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .map-card {
+            position: relative;
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        
+        .map-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .map-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .map-content {
+            padding: 1.5rem;
+        }
+        
+        .map-content h3 {
+            margin-bottom: 0.8rem;
+            color: var(--secondary-color);
+        }
+        
+        .map-tags {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .tag {
+            background-color: #eaf2f8;
+            color: var(--primary-color);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: 0.8rem 1.5rem;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        footer {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        /* Filter controls */
+        .filter-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            background-color: var(--white);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        @media (max-width: 768px) {
+            .nav-menu {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                flex-direction: column;
+                background-color: var(--secondary-color);
+                width: 100%;
+                text-align: center;
+                transition: 0.3s;
+                box-shadow: var(--shadow);
+                padding: 1rem 0;
+                z-index: 100;
+            }
+            
+            .nav-menu.active {
+                left: 0;
+            }
+            
+            .nav-menu li {
+                margin: 1rem 0;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">Maxx Millstein</a>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html" class="active">Web Maps</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+                <button class="mobile-menu-btn">☰</button>
+            </nav>
+        </div>
+    </header>
+    
+    <section>
+        <div class="container">
+            <div class="section-title">
+                <h2>My Web Maps Portfolio</h2>
+            </div>
+            
+            <div class="intro">
+                <p>Here's a collection of interactive web maps I've developed. Each project demonstrates different mapping techniques, data visualization approaches, and geospatial analysis methods. Click on the maps to explore them in detail.</p>
+            </div>
+            
+            <div class="filter-controls">
+                <button class="filter-btn active" data-filter="all">All Maps</button>
+                <button class="filter-btn" data-filter="leaflet">Leaflet</button>
+                <button class="filter-btn" data-filter="mapbox">Mapbox GL</button>
+                <button class="filter-btn" data-filter="choropleth">Choropleth</button>
+                <button class="filter-btn" data-filter="interactive">Interactive</button>
+            </div>
+            
+            <div class="grid">
+                <!-- Map 1 -->
+                <div class="map-card" data-categories="leaflet choropleth">
+                    <img src="/api/placeholder/600/400" alt="Population Density Map" class="map-img">
+                    <div class="map-content">
+                        <h3>Population Density Map</h3>
+                        <div class="map-tags">
+                            <span class="tag">Leaflet</span>
+                            <span class="tag">Choropleth</span>
+                            <span class="tag">GeoJSON</span>
+                        </div>
+                        <p>An interactive choropleth map showing population density across different regions with customized color scales and information tooltips.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/population-map" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+                
+                <!-- Map 2 -->
+                <div class="map-card" data-categories="mapbox interactive">
+                    <img src="/api/placeholder/600/400" alt="Urban Transportation Routes" class="map-img">
+                    <div class="map-content">
+                        <h3>Urban Transportation Routes</h3>
+                        <div class="map-tags">
+                            <span class="tag">Mapbox GL</span>
+                            <span class="tag">3D</span>
+                            <span class="tag">Interactive</span>
+                        </div>
+                        <p>A 3D visualization of urban transportation routes with real-time data integration, featuring custom styling and interactive elements.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/transportation-map" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+                
+                <!-- Map 3 -->
+                <div class="map-card" data-categories="leaflet interactive">
+                    <img src="/api/placeholder/600/400" alt="Historical Weather Patterns" class="map-img">
+                    <div class="map-content">
+                        <h3>Historical Weather Patterns</h3>
+                        <div class="map-tags">
+                            <span class="tag">Leaflet</span>
+                            <span class="tag">Time Series</span>
+                            <span class="tag">Interactive</span>
+                        </div>
+                        <p>Visualization of historical weather data with time-slider controls, allowing users to see patterns evolve over different time periods.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/weather-patterns-map" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+                
+                <!-- Map 4 -->
+                <div class="map-card" data-categories="mapbox choropleth">
+                    <img src="/api/placeholder/600/400" alt="Economic Indicators" class="map-img">
+                    <div class="map-content">
+                        <h3>Economic Indicators Map</h3>
+                        <div class="map-tags">
+                            <span class="tag">Mapbox GL</span>
+                            <span class="tag">Choropleth</span>
+                            <span class="tag">Data Dashboard</span>
+                        </div>
+                        <p>A comprehensive economic data visualization with multiple interactive layers and an integrated dashboard showing key statistics.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/economic-indicators" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+                
+                <!-- Map 5 -->
+                <div class="map-card" data-categories="leaflet interactive">
+                    <img src="/api/placeholder/600/400" alt="Hiking Trails Explorer" class="map-img">
+                    <div class="map-content">
+                        <h3>Hiking Trails Explorer</h3>
+                        <div class="map-tags">
+                            <span class="tag">Leaflet</span>
+                            <span class="tag">Elevation Profile</span>
+                            <span class="tag">Interactive</span>
+                        </div>
+                        <p>Interactive map of hiking trails featuring elevation profiles, difficulty ratings, and user-contributed trail conditions and photos.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/hiking-trails-map" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+                
+                <!-- Map 6 -->
+                <div class="map-card" data-categories="mapbox interactive">
+                    <img src="/api/placeholder/600/400" alt="Urban Growth Analysis" class="map-img">
+                    <div class="map-content">
+                        <h3>Urban Growth Analysis</h3>
+                        <div class="map-tags">
+                            <span class="tag">Mapbox GL</span>
+                            <span class="tag">Satellite Imagery</span>
+                            <span class="tag">Time Lapse</span>
+                        </div>
+                        <p>Time-lapse visualization showing urban development over decades using historical satellite imagery with before-and-after comparison tools.</p>
+                        <a href="#" class="btn">View Map</a>
+                        <a href="https://github.com/yourusername/urban-growth-map" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Maxx Millstein. All rights reserved.</p>
+            <p><a href="index.html">Return to Home</a></p>
+        </div>
+    </footer>
+    
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navMenu = document.querySelector('.nav-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+        
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+            });
+        });
+        
+        // Filter functionality
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const mapCards = document.querySelectorAll('.map-card');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                const filter = btn.getAttribute('data-filter');
+                
+                mapCards.forEach(card => {
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else {
+                        const categories = card.getAttribute('data-categories');
+                        if (categories.includes(filter)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
