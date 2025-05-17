@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economic Data Visualization Dashboard</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f7;
+            color: #333;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        header {
+            background-color: #1a1a2e;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background-color: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .controls {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .controls h2 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #444;
+        }
+        
+        .control-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9rem;
+        }
+        
+        button {
+            background-color: #16213e;
+            color: white;
+            border: none;
+            padding: 0.7rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background-color: #0f3460;
+        }
+        
+        .charts {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .chart-value {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .chart-canvas-container {
+            position: relative;
+            height: 180px;
+            margin-top: 0.5rem;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+            font-size: 0.85rem;
+            z-index: 1;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .map-control-btn {
+            background-color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            font-weight: 500;
+            width: auto;
+        }
+        
+        .active {
+            background-color: #16213e;
+            color: white;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #16213e;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            font-size: 0.85rem;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip h3 {
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        
+        .tooltip p {
+            margin: 3px 0;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 40%;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .map-container {
+                height: 60%;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .chart-canvas-container {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1>Global Economic Indicators Dashboard</h1>
+            <div class="header-controls">
+                <span id="last-updated">Last updated: May 2025</span>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div class="map-overlay">
+                    <div>Selected: <span id="selected-region" class="stat-value">Global</span></div>
+                    <div>GDP Growth: <span id="gdp-growth" class="stat-value">3.2%</span></div>
+                    <div>Unemployment: <span id="unemployment" class="stat-value">5.7%</span></div>
+                </div>
+                <div class="map-controls">
+                    <button class="map-control-btn active" data-layer="gdp">GDP Growth</button>
+                    <button class="map-control-btn" data-layer="unemployment">Unemployment</button>
+                    <button class="map-control-btn" data-layer="inflation">Inflation</button>
+                </div>
+                <div id="tooltip" class="tooltip"></div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="controls">
+                    <h2>Dashboard Controls</h2>
+                    <div class="control-group">
+                        <label for="region-select">Region</label>
+                        <select id="region-select">
+                            <option value="global">Global</option>
+                            <option value="north-america">North America</option>
+                            <option value="europe">Europe</option>
+                            <option value="asia-pacific">Asia Pacific</option>
+                            <option value="latin-america">Latin America</option>
+                            <option value="africa">Africa</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="time-period">Time Period</label>
+                        <select id="time-period">
+                            <option value="1y">1 Year</option>
+                            <option value="3y" selected>3 Years</option>
+                            <option value="5y">5 Years</option>
+                            <option value="10y">10 Years</option>
+                        </select>
+                    </div>
+                    <button id="update-data">Update Dashboard</button>
+                </div>
+                
+                <div class="charts">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">GDP Growth Rate (%)</div>
+                            <div class="chart-value" id="avg-gdp">+3.2%</div>
+                        </div>
+                        <div class="chart-canvas-container">
+                            <canvas id="gdp-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Unemployment Rate (%)</div>
+                            <div class="chart-value" id="avg-unemployment">5.7%</div>
+                        </div>
+                        <div class="chart-canvas-container">
+                            <canvas id="unemployment-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Inflation Rate (%)</div>
+                            <div class="chart-value" id="avg-inflation">2.8%</div>
+                        </div>
+                        <div class="chart-canvas-container">
+                            <canvas id="inflation-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Trade Balance (Billions USD)</div>
+                            <div class="chart-value" id="trade-balance">-$122B</div>
+                        </div>
+                        <div class="chart-canvas-container">
+                            <canvas id="trade-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize mapbox
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWF4eG1pbGwiLCJhIjoiY2prazUwMXY1MGVscDNxcGp3bm1iMzhpbCJ9.3xgguxb2N4R0BYni4byAxQ';
+        
+        // Sample economic data for demonstration
+        const economicData = {
+            global: {
+                gdp: {
+                    trend: [2.9, 3.1, 2.8, 3.2, 3.4, 3.3, 3.2, 3.5, 3.6, 3.4, 3.3, 3.2],
+                    average: 3.2
+                },
+                unemployment: {
+                    trend: [5.8, 5.9, 6.0, 5.9, 5.8, 5.7, 5.6, 5.5, 5.6, 5.7, 5.7, 5.7],
+                    average: 5.7
+                },
+                inflation: {
+                    trend: [2.9, 3.0, 3.1, 3.0, 2.9, 2.8, 2.7, 2.6, 2.7, 2.8, 2.8, 2.8],
+                    average: 2.8
+                },
+                trade: {
+                    trend: [-110, -115, -118, -120, -122, -125, -128, -126, -124, -123, -122, -122],
+                    average: -122
+                }
+            },
+            'north-america': {
+                gdp: {
+                    trend: [2.5, 2.7, 2.6, 2.8, 3.0, 3.1, 3.0, 3.2, 3.3, 3.2, 3.1, 3.0],
+                    average: 3.0
+                },
+                unemployment: {
+                    trend: [4.8, 4.7, 4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0, 3.9, 3.8, 3.7],
+                    average: 4.2
+                },
+                inflation: {
+                    trend: [3.1, 3.2, 3.3, 3.4, 3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8],
+                    average: 3.2
+                },
+                trade: {
+                    trend: [-75, -78, -80, -82, -85, -88, -90, -92, -95, -98, -100, -102],
+                    average: -89
+                }
+            },
+            'europe': {
+                gdp: {
+                    trend: [1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.5, 2.4, 2.3],
+                    average: 2.3
+                },
+                unemployment: {
+                    trend: [7.5, 7.4, 7.3, 7.2, 7.1, 7.0, 6.9, 6.8, 6.7, 6.6, 6.5, 6.4],
+                    average: 6.9
+                },
+                inflation: {
+                    trend: [2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4],
+                    average: 2.7
+                },
+                trade: {
+                    trend: [45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67],
+                    average: 56
+                }
+            },
+            'asia-pacific': {
+                gdp: {
+                    trend: [4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0, 5.1, 5.2, 5.3],
+                    average: 4.8
+                },
+                unemployment: {
+                    trend: [4.5, 4.4, 4.3, 4.2, 4.1, 4.0, 3.9, 3.8, 3.7, 3.6, 3.5, 3.4],
+                    average: 4.0
+                },
+                inflation: {
+                    trend: [2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 2.9, 2.8, 2.7],
+                    average: 2.7
+                },
+                trade: {
+                    trend: [120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175],
+                    average: 148
+                }
+            },
+            'latin-america': {
+                gdp: {
+                    trend: [2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0, 3.1],
+                    average: 2.6
+                },
+                unemployment: {
+                    trend: [8.5, 8.4, 8.3, 8.2, 8.1, 8.0, 7.9, 7.8, 7.7, 7.6, 7.5, 7.4],
+                    average: 7.9
+                },
+                inflation: {
+                    trend: [4.5, 4.6, 4.7, 4.8, 4.9, 5.0, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6],
+                    average: 5.1
+                },
+                trade: {
+                    trend: [-15, -16, -17, -18, -19, -20, -21, -22, -23, -24, -25, -26],
+                    average: -21
+                }
+            },
+            'africa': {
+                gdp: {
+                    trend: [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6],
+                    average: 4.1
+                },
+                unemployment: {
+                    trend: [10.2, 10.1, 10.0, 9.9, 9.8, 9.7, 9.6, 9.5, 9.4, 9.3, 9.2, 9.1],
+                    average: 9.7
+                },
+                inflation: {
+                    trend: [5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.0, 6.1, 6.2, 6.3],
+                    average: 5.7
+                },
+                trade: {
+                    trend: [-25, -26, -27, -28, -29, -30, -31, -32, -33, -34, -35, -36],
+                    average: -31
+                }
+            }
+        };
+        
+        // Country data for map visualization
+        const countryData = {
+            usa: { 
+                name: "United States", 
+                gdp: 3.1, 
+                unemployment: 3.8, 
+                inflation: 2.9, 
+                coordinates: [-95.7129, 37.0902],
+                region: "north-america"
+            },
+            canada: { 
+                name: "Canada", 
+                gdp: 2.8, 
+                unemployment: 5.2, 
+                inflation: 3.5, 
+                coordinates: [-106.3468, 56.1304],
+                region: "north-america"
+            },
+            germany: { 
+                name: "Germany", 
+                gdp: 1.9, 
+                unemployment: 5.7, 
+                inflation: 2.3, 
+                coordinates: [10.4515, 51.1657],
+                region: "europe"
+            },
+            france: { 
+                name: "France", 
+                gdp: 2.1, 
+                unemployment: 7.1, 
+                inflation: 2.5, 
+                coordinates: [2.2137, 46.2276],
+                region: "europe"
+            },
+            uk: { 
+                name: "United Kingdom", 
+                gdp: 2.3, 
+                unemployment: 4.2, 
+                inflation: 2.8, 
+                coordinates: [-3.4360, 55.3781],
+                region: "europe"
+            },
+            italy: { 
+                name: "Italy", 
+                gdp: 1.7, 
+                unemployment: 8.4, 
+                inflation: 2.2, 
+                coordinates: [12.5674, 41.8719],
+                region: "europe"
+            },
+            japan: { 
+                name: "Japan", 
+                gdp: 2.2, 
+                unemployment: 2.6, 
+                inflation: 1.8, 
+                coordinates: [138.2529, 36.2048],
+                region: "asia-pacific"
+            },
+            china: { 
+                name: "China", 
+                gdp: 5.5, 
+                unemployment: 3.9, 
+                inflation: 2.7, 
+                coordinates: [104.1954, 35.8617],
+                region: "asia-pacific"
+            },
+            india: { 
+                name: "India", 
+                gdp: 6.2, 
+                unemployment: 5.8, 
+                inflation: 4.5, 
+                coordinates: [78.9629, 20.5937],
+                region: "asia-pacific"
+            },
+            australia: { 
+                name: "Australia", 
+                gdp: 3.3, 
+                unemployment: 4.3, 
+                inflation: 3.1, 
+                coordinates: [133.7751, -25.2744],
+                region: "asia-pacific"
+            },
+            brazil: { 
+                name: "Brazil", 
+                gdp: 3.0, 
+                unemployment: 8.1, 
+                inflation: 5.2, 
+                coordinates: [-51.9253, -14.2350],
+                region: "latin-america"
+            },
+            mexico: { 
+                name: "Mexico", 
+                gdp: 2.7, 
+                unemployment: 3.5, 
+                inflation: 4.8, 
+                coordinates: [-102.5528, 23.6345],
+                region: "latin-america"
+            },
+            southAfrica: { 
+                name: "South Africa", 
+                gdp: 2.5, 
+                unemployment: 27.5, 
+                inflation: 5.7, 
+                coordinates: [22.9375, -30.5595],
+                region: "africa"
+            },
+            nigeria: { 
+                name: "Nigeria", 
+                gdp: 4.2, 
+                unemployment: 18.4, 
+                inflation: 16.5, 
+                coordinates: [8.6753, 9.0820],
+                region: "africa"
+            },
+            egypt: { 
+                name: "Egypt", 
+                gdp: 4.5, 
+                unemployment: 7.3, 
+                inflation: 12.1, 
+                coordinates: [30.8025, 26.8206],
+                region: "africa"
+            }
+        };
+        
+        // Monthly labels for charts
+        const months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
+        
+        // Chart colors
+        const colors = {
+            gdp: {
+                background: 'rgba(54, 162, 235, 0.2)',
+                border: 'rgba(54, 162, 235, 1)'
+            },
+            unemployment: {
+                background: 'rgba(255, 99, 132, 0.2)',
+                border: 'rgba(255, 99, 132, 1)'
+            },
+            inflation: {
+                background: 'rgba(255, 206, 86, 0.2)',
+                border: 'rgba(255, 206, 86, 1)'
+            },
+            trade: {
+                background: 'rgba(75, 192, 192, 0.2)',
+                border: 'rgba(75, 192, 192, 1)'
+            }
+        };
+        
+        // Initialize charts
+        let gdpChart, unemploymentChart, inflationChart, tradeChart;
+        let map;
+        let currentLayer = 'gdp';
+        let currentRegion = 'global';
+        let mapMarkers = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            initCharts();
+            setupEventListeners();
+            
+            // Hide loading spinner after initialization
+            setTimeout(() => {
+                document.querySelector('.loading').style.display = 'none';
+            }, 1500);
+        });
+        
+        function initMap() {
+            map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/light-v11',
+                center: [0, 20],
+                zoom: 1.5
+            });
+            
+            map.on('load', function() {
+                addMapControls();
+                addCountryMarkers('gdp');
+            });
+        }
+        
+        function addCountryMarkers(dataType) {
+            // Remove existing markers
+            mapMarkers.forEach(marker => marker.remove());
+            mapMarkers = [];
+            
+            // Add new markers
+            Object.values(countryData).forEach(country => {
+                if (currentRegion !== 'global' && country.region !== currentRegion) {
+                    return;
+                }
+                
+                let value = country[dataType];
+                let color = getMarkerColor(dataType, value);
+                
+                // Create custom marker element
+                const el = document.createElement('div');
+                el.style.width = '15px';
+                el.style.height = '15px';
+                el.style.borderRadius = '50%';
+                el.style.backgroundColor = color;
+                el.style.border = '2px solid white';
+                el.style.boxShadow = '0 0 0 1px rgba(0, 0, 0, 0.1)';
+                
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat(country.coordinates)
+                    .addTo(map);
+                
+                mapMarkers.push(marker);
+                
+                // Add event listeners for the marker
+                el.addEventListener('mouseenter', () => showTooltip(country, dataType, el));
+                el.addEventListener('mouseleave', () => hideTooltip());
+            });
+        }
+        
+        function getMarkerColor(dataType, value) {
+            if (dataType === 'gdp') {
+                if (value >= 5) return 'rgb(0, 128, 0)';  // Green
+                if (value >= 3) return 'rgb(144, 238, 144)';  // Light green
+                if (value >= 0) return 'rgb(255, 255, 0)';  // Yellow
+                return 'rgb(255, 99, 71)';  // Red
+            } else if (dataType === 'unemployment') {
+                if (value <= 5) return 'rgb(0, 128, 0)';  // Green
+                if (value <= 8) return 'rgb(255, 255, 0)';  // Yellow
+                if (value <= 15) return 'rgb(255, 165, 0)';  // Orange
+                return 'rgb(255, 0, 0)';  // Red
+            } else if (dataType === 'inflation') {
+                if (value <= 2) return 'rgb(0, 128, 0)';  // Green
+                if (value <= 4) return 'rgb(255, 255, 0)';  // Yellow
+                if (value <= 8) return 'rgb(255, 165, 0)';  // Orange
+                return 'rgb(255, 0, 0)';  // Red
+            }
+        }
+        
+        function showTooltip(country, dataType, element) {
+            const tooltip = document.getElementById('tooltip');
+            
+            // Set content based on data type
+            tooltip.innerHTML = `
+                <h3>${country.name}</h3>
+                <p>GDP Growth: <strong>${country.gdp}%</strong></p>
+                <p>Unemployment: <strong>${country.unemployment}%</strong></p>
+                <p>Inflation: <strong>${country.inflation}%</strong></p>
+            `;
+            
+            // Position tooltip
+            const rect = element.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + window.scrollX + rect.width}px`;
+            tooltip.style.top = `${rect.top + window.scrollY - 20}px`;
+            tooltip.style.opacity = '1';
+            
+            // Update selected region stats in overlay
+            document.getElementById('selected-region').textContent = country.name;
+            document.getElementById('gdp-growth').textContent = `${country.gdp}%`;
+            document.getElementById('unemployment').textContent = `${country.unemployment}%`;
+        }
+        
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.opacity = '0';
+            
+            // Reset selected region stats to current region
+            updateMapOverlay(currentRegion);
+        }
+        
+        function updateMapOverlay(region) {
+            const data = economicData[region];
+            
+            document.getElementById('selected-region').textContent = region.charAt(0).toUpperCase() + region.slice(1).replace(/-/g, ' ');
+            document.getElementById('gdp-growth').textContent = `${data.gdp.average}%`;
+            document.getElementById('unemployment').textContent = `${data.unemployment.average}%`;
+        }
+        
+        function addMapControls() {
+            const controls = document.querySelectorAll('.map-control-btn');
+            
+            controls.forEach(control => {
+                control.addEventListener('click', function() {
+                    // Update active class
+                    controls.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update map layer
+                    currentLayer = this.getAttribute('data-layer');
+                    addCountryMarkers(currentLayer);
+                });
+            });
+        }
+        
+        function initCharts() {
+            // Initialize all charts
+            createGDPChart();
+            createUnemploymentChart();
+            createInflationChart();
+            createTradeChart();
+            
+            // Update chart data
+            updateChartData(currentRegion);
+        }
+        
+        function createGDPChart() {
+            const ctx = document.getElementById('gdp-chart').getContext('2d');
+            gdpChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'GDP Growth Rate (%)',
+                        data: [],
+                        backgroundColor: colors.gdp.background,
+                        borderColor: colors.gdp.border,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }]
+                },
+                options: getChartOptions('GDP Growth Rate (%)')
+            });
+        }
+        
+        function createUnemploymentChart() {
+            const ctx = document.getElementById('unemployment-chart').getContext('2d');
+            unemploymentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Unemployment Rate (%)',
+                        data: [],
+                        backgroundColor: colors.unemployment.background,
+                        borderColor: colors.unemployment.border,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }]
+                },
+                options: getChartOptions('Unemployment Rate (%)')
+            });
+        }
+        
+        function createInflationChart() {
+            const ctx = document.getElementById('inflation-chart').getContext('2d');
+            inflationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Inflation Rate (%)',
+                        data: [],
+                        backgroundColor: colors.inflation.background,
+                        borderColor: colors.inflation.border,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }]
+                },
+                options: getChartOptions('Inflation Rate (%)')
+            });
+        }
+        
+        function createTradeChart() {
+            const ctx = document.getElementById('trade-chart').getContext('2d');
+            tradeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Trade Balance (Billions USD)',
+                        data: [],
+                        backgroundColor: colors.trade.background,
+                        borderColor: colors.trade.border,
+                        borderWidth: 2
+                    }]
+                },
+                options: getChartOptions('Trade Balance (Billions USD)')
+            });
+        }
+        
+        function getChartOptions(title) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        function updateChartData(region) {
+            const data = economicData[region];
+            
+            // Update GDP chart
+            gdpChart.data.datasets[0].data = data.gdp.trend;
+            gdpChart.update();
+            document.getElementById('avg-gdp').textContent = `+${data.gdp.average}%`;
+            
+            // Update Unemployment chart
+            unemploymentChart.data.datasets[0].data = data.unemployment.trend;
+            unemploymentChart.update();
+            document.getElementById('avg-unemployment').textContent = `${data.unemployment.average}%`;
+            
+            // Update Inflation chart
+            inflationChart.data.datasets[0].data = data.inflation.trend;
+            inflationChart.update();
+            document.getElementById('avg-inflation').textContent = `${data.inflation.average}%`;
+            
+            // Update Trade chart
+            tradeChart.data.datasets[0].data = data.trade.trend;
+            tradeChart.update();
+            
+            // Format trade balance with appropriate sign
+            const tradeValue = data.trade.average;
+            document.getElementById('trade-balance').textContent = formatTradeBalance(tradeValue);
+            
+            // Update map overlay
+            updateMapOverlay(region);
+        }
+        
+        function formatTradeBalance(value) {
+            if (value >= 0) {
+                return `+${Math.abs(value)}B`;
+            } else {
+                return `-${Math.abs(value)}B`;
+            }
+        }
+        
+        function setupEventListeners() {
+            // Region select change
+            document.getElementById('region-select').addEventListener('change', function() {
+                currentRegion = this.value;
+                updateChartData(currentRegion);
+                addCountryMarkers(currentLayer);
+                
+                // Fly to region
+                flyToRegion(currentRegion);
+            });
+            
+            // Update button click
+            document.getElementById('update-data').addEventListener('click', function() {
+                // Show loading animation
+                document.querySelector('.loading').style.display = 'flex';
+                
+                // Simulate data update
+                setTimeout(() => {
+                    // Generate slight variations in data
+                    Object.keys(economicData).forEach(region => {
+                        ['gdp', 'unemployment', 'inflation', 'trade'].forEach(metric => {
+                            economicData[region][metric].trend = economicData[region][metric].trend.map(value => {
+                                // Add small random variation
+                                const variation = (Math.random() - 0.5) * 0.4;
+                                return parseFloat((value + variation).toFixed(1));
+                            });
+                            
+                            // Update average
+                            const sum = economicData[region][metric].trend.reduce((a, b) => a + b, 0);
+                            economicData[region][metric].average = parseFloat((sum / economicData[region][metric].trend.length).toFixed(1));
+                        });
+                    });
+                    
+                    // Update charts and map
+                    updateChartData(currentRegion);
+                    addCountryMarkers(currentLayer);
+                    
+                    // Update last updated timestamp
+                    document.getElementById('last-updated').textContent = `Last updated: ${new Date().toLocaleDateString()}`;
+                    
+                    // Hide loading animation
+                    document.querySelector('.loading').style.display = 'none';
+                }, 1500);
+            });
+            
+            // Time period select
+            document.getElementById('time-period').addEventListener('change', function() {
+                // This would typically fetch data for different time periods
+                // For this demo, we'll just show a loading animation
+                document.querySelector('.loading').style.display = 'flex';
+                
+                setTimeout(() => {
+                    document.querySelector('.loading').style.display = 'none';
+                }, 1000);
+            });
+        }
+        
+        function flyToRegion(region) {
+            // Define region coordinates and zoom levels
+            const regionViews = {
+                'global': {
+                    center: [0, 20],
+                    zoom: 1.5
+                },
+                'north-america': {
+                    center: [-100, 45],
+                    zoom: 2.5
+                },
+                'europe': {
+                    center: [15, 50],
+                    zoom: 3
+                },
+                'asia-pacific': {
+                    center: [100, 20],
+                    zoom: 2.5
+                },
+                'latin-america': {
+                    center: [-70, -15],
+                    zoom: 2.5
+                },
+                'africa': {
+                    center: [20, 0],
+                    zoom: 2.5
+                }
+            };
+            
+            // Fly to selected region
+            map.flyTo({
+                center: regionViews[region].center,
+                zoom: regionViews[region].zoom,
+                essential: true,
+                duration: 1500
+            });
+        }
+    </script>
+</body>
+</html>
