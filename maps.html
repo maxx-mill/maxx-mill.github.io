@@ -4,14 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maxx Millstein - Web Maps</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --text-color: #333;
-            --light-bg: #f8f9fa;
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #1f2937;
+            --light-bg: #f3f4f6;
             --white: #ffffff;
-            --shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
         
         * {
@@ -129,14 +133,17 @@
         .map-card {
             position: relative;
             background-color: var(--white);
-            border-radius: 10px;
+            border-radius: 16px;
             box-shadow: var(--shadow);
             overflow: hidden;
-            transition: transform 0.3s;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 2rem;
         }
         
         .map-card:hover {
             transform: translateY(-10px);
+            box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.15);
         }
         
         .map-img {
@@ -146,12 +153,14 @@
         }
         
         .map-content {
-            padding: 1.5rem;
+            padding: 0;
         }
         
         .map-content h3 {
-            margin-bottom: 0.8rem;
+            margin-bottom: 1rem;
             color: var(--secondary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         .map-tags {
@@ -161,13 +170,14 @@
         }
         
         .tag {
-            background-color: #eaf2f8;
+            background-color: #eef2ff;
             color: var(--primary-color);
-            padding: 0.3rem 0.8rem;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             margin-right: 0.5rem;
             margin-bottom: 0.5rem;
+            font-weight: 500;
         }
         
         .btn {
@@ -222,17 +232,20 @@
             background-color: var(--white);
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.5rem;
             margin: 0.5rem;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
         }
         
         .filter-btn.active, .filter-btn:hover {
-            background-color: var(--primary-color);
+            background: var(--gradient);
             color: var(--white);
+            border-color: transparent;
+            transform: translateY(-2px);
         }
         
         @media (max-width: 768px) {
@@ -304,9 +317,8 @@
             <div class="grid">
                 <!-- Map 1 -->
                 <div class="map-card" data-categories="leaflet choropleth">
-                    <img src="/api/placeholder/600/400" alt="Earthquake Visualization Map" class="map-img">
                     <div class="map-content">
-                        <h3>Earthquake Visualization Map</Map></h3>
+                        <h3>Earthquake Visualization Map</h3>
                         <div class="map-tags">
                             <span class="tag">Leaflet</span>
                             <span class="tag">Choropleth</span>
@@ -320,7 +332,6 @@
                 
                 <!-- Map 2 -->
                 <div class="map-card" data-categories="mapbox interactive">
-                    <img src="/api/placeholder/600/400" alt="Urban Transportation Routes" class="map-img">
                     <div class="map-content">
                         <h3>Urban Transportation Routes</h3>
                         <div class="map-tags">
@@ -336,7 +347,6 @@
                 
                 <!-- Map 3 -->
                 <div class="map-card" data-categories="leaflet interactive">
-                    <img src="/api/placeholder/600/400" alt="Historical Weather Patterns" class="map-img">
                     <div class="map-content">
                         <h3>Historical Weather Patterns</h3>
                         <div class="map-tags">
@@ -352,7 +362,6 @@
                 
                 <!-- Map 4 -->
                 <div class="map-card" data-categories="mapbox choropleth">
-                    <img src="/api/placeholder/600/400" alt="Economic Indicators" class="map-img">
                     <div class="map-content">
                         <h3>Economic Indicators Map</h3>
                         <div class="map-tags">
@@ -368,7 +377,6 @@
                 
                 <!-- Map 5 -->
                 <div class="map-card" data-categories="leaflet interactive">
-                    <img src="/api/placeholder/600/400" alt="Hiking Trails Explorer" class="map-img">
                     <div class="map-content">
                         <h3>Hiking Trails Explorer</h3>
                         <div class="map-tags">
@@ -384,7 +392,6 @@
                 
                 <!-- Map 6 -->
                 <div class="map-card" data-categories="mapbox interactive">
-                    <img src="/api/placeholder/600/400" alt="Urban Growth Analysis" class="map-img">
                     <div class="map-content">
                         <h3>Urban Growth Analysis</h3>
                         <div class="map-tags">
