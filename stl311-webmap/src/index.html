@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>St. Louis 311 Service Requests Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    body {
+      height: 100vh;
+    }
+    .main-flex {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar {
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding: 1rem;
+      min-width: 260px;
+      max-width: 320px;
+      width: 320px;
+      height: 100vh;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+      z-index: 1001;
+    }
+    .legend-icon {
+      display: inline-block;
+      width: 2em;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .legend-label {
+      margin-left: 0.5em;
+      vertical-align: middle;
+    }
+    .sidebar-toggle {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.25em 0.5em;
+      cursor: pointer;
+      box-shadow: 1px 1px 6px rgba(0,0,0,0.08);
+    }
+    .loading-spinner {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.7);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      color: #333;
+      transition: opacity 0.3s;
+    }
+    .loading-spinner.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .map-flex {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 100vh;
+      position: relative;
+      padding: 0;
+      margin: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+      min-height: 400px;
+    }
+    @media (max-width: 991px) {
+      .sidebar { display: none; }
+      .sidebar.show { display: block; position: absolute; top: 0; left: 0; height: 100vh; background: #fff; z-index: 1100; }
+    }
+    .leaflet-control-layers {
+      font-size: 1em;
+    }
+    .leaflet-popup-content {
+      font-size: 1em;
+    }
+    footer {
+      background: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      padding: 0.5em 0;
+      text-align: center;
+      font-size: 0.95em;
+      color: #666;
+      position: relative;
+      z-index: 1002;
+    }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle d-lg-none" aria-label="Toggle sidebar" tabindex="0"><i class="fa fa-bars"></i></button>
+  <div class="main-flex">
+    <div class="sidebar d-none d-lg-block" id="sidebar">
+      <!-- sidebar content (legend, filters, etc.) -->
+      <h4 class="mb-3">St. Louis 311 Service Requests</h4>
+      <p class="text-muted">Interactive map for field workers and the public to view and manage service requests.</p>
+      <hr>
+      <h6>Legend</h6>
+      <div id="legend">
+        <div><span class="legend-icon"><i class="fa-solid fa-car" style="color:#333"></i></span><span class="legend-label">Pothole</span></div>
+        <div><span class="legend-icon"><i class="fa-solid fa-spray-can" style="color:#333"></i></span><span class="legend-label">Graffiti</span></div>
+        <div><span class="legend-icon"><i class="fa-solid fa-lightbulb" style="color:#333"></i></span><span class="legend-label">Streetlight Out</span></div>
+        <div><span class="legend-icon"><i class="fa-solid fa-trash" style="color:#333"></i></span><span class="legend-label">Trash/Dumping</span></div>
+        <div><span class="legend-icon"><i class="fa-solid fa-car-burst" style="color:#333"></i></span><span class="legend-label">Abandoned Vehicle</span></div>
+        <div><span class="legend-icon"><i class="fa-solid fa-circle-question" style="color:#888"></i></span><span class="legend-label">Other/Unknown</span></div>
+      </div>
+      <hr>
+      <h6>Filter by Status</h6>
+      <div id="status-filters" class="mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="Open" id="filterOpen" checked>
+          <label class="form-check-label" for="filterOpen">Open</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="Closed" id="filterClosed" checked>
+          <label class="form-check-label" for="filterClosed">Closed</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="New" id="filterNew" checked>
+          <label class="form-check-label" for="filterNew">New</label>
+        </div>
+      </div>
+      <hr>
+      <div class="small text-muted">Built with Leaflet, Bootstrap, and Font Awesome.<br>Mobile-friendly and open source.</div>
+    </div>
+    <div class="map-flex">
+      <div id="map"></div>
+      <div class="loading-spinner" id="loadingSpinner" aria-live="polite"><i class="fa fa-spinner fa-spin"></i> Loading map...</div>
+    </div>
+  </div>
+  <footer>
+    &copy; 2024 Maxx Mill | Data: City of St. Louis 311 | Built with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>, <a href="https://getbootstrap.com/" target="_blank" rel="noopener">Bootstrap</a>, <a href="https://fontawesome.com/" target="_blank" rel="noopener">Font Awesome</a>
+  </footer>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script>
+    // Sidebar toggle for mobile
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    sidebarToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('show');
+    });
+
+    // Initialize map
+    const map = L.map('map', {
+      center: [38.6270, -90.1994],
+      zoom: 12,
+      zoomControl: true
+    });
+
+    // Basemaps
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    const esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles © Esri'
+    });
+    const baseMaps = {
+      "OpenStreetMap": osm,
+      "Esri World Imagery": esri
+    };
+
+    // Layer groups for toggling
+    const typeLayers = {
+      "Pothole": L.markerClusterGroup(),
+      "Graffiti": L.markerClusterGroup(),
+      "Streetlight Out": L.markerClusterGroup(),
+      "Trash": L.markerClusterGroup(),
+      "Abandoned Vehicle": L.markerClusterGroup(),
+      "Other": L.markerClusterGroup()
+    };
+
+    // Add layer control
+    L.control.layers(baseMaps, {
+      "Pothole": typeLayers["Pothole"],
+      "Graffiti": typeLayers["Graffiti"],
+      "Streetlight Out": typeLayers["Streetlight Out"],
+      "Trash/Dumping": typeLayers["Trash"],
+      "Abandoned Vehicle": typeLayers["Abandoned Vehicle"],
+      "Other": typeLayers["Other"]
+    }, { collapsed: false, position: 'topright' }).addTo(map);
+
+    // Add geocoder (search bar)
+    L.Control.geocoder({
+      defaultMarkGeocode: false,
+      placeholder: 'Search address...'
+    })
+      .on('markgeocode', function(e) {
+        map.setView(e.geocode.center, 16);
+        L.marker(e.geocode.center).addTo(map).bindPopup(e.geocode.name).openPopup();
+      })
+      .addTo(map);
+
+    // Add locate (zoom to my location)
+    L.control.locate = function(opts) {
+      const control = L.control({position: 'topleft'});
+      control.onAdd = function(map) {
+        const btn = L.DomUtil.create('button', 'btn btn-light btn-sm');
+        btn.innerHTML = '<i class="fa fa-location-crosshairs"></i>';
+        btn.title = 'Zoom to my location';
+        btn.setAttribute('aria-label', 'Zoom to my location');
+        btn.onclick = function() {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+              const latlng = [pos.coords.latitude, pos.coords.longitude];
+              map.setView(latlng, 16);
+              L.circleMarker(latlng, {radius: 10, color: '#007bff', fillColor: '#007bff', fillOpacity: 0.3}).addTo(map).bindPopup('You are here').openPopup();
+            });
+          }
+        };
+        return btn;
+      };
+      return control;
+    };
+    L.control.locate().addTo(map);
+
+    // Icon function
+    function getIcon(type, status, description) {
+      const colorMap = {
+        "Open": "green",
+        "Closed": "red",
+        "New": "blue"
+      };
+      const color = colorMap[status] || "gray";
+      let iconClass = "fa-circle-question";
+      let faPrefix = "fa-solid";
+      const desc = (description || "").toLowerCase();
+      const t = (type || "").toLowerCase();
+      if (t.includes("pothole") || desc.includes("pothole")) {
+        iconClass = "fa-car";
+      } else if (t.includes("graffiti") || desc.includes("graffiti")) {
+        iconClass = "fa-spray-can";
+      } else if (t.includes("light") || desc.includes("light")) {
+        iconClass = "fa-lightbulb";
+      } else if (t.includes("trash") || t.includes("dump") || desc.includes("trash") || desc.includes("dump")) {
+        iconClass = "fa-trash";
+      } else if (t.includes("vehicle") || desc.includes("vehicle")) {
+        iconClass = "fa-car-burst";
+      } else if (t.includes("parking") || desc.includes("parking")) {
+        iconClass = "fa-square-parking";
+      } else if (t.includes("tree") || desc.includes("tree")) {
+        iconClass = "fa-tree";
+      } else if (t.includes("animal") || desc.includes("animal")) {
+        iconClass = "fa-dog";
+      } else if (t.includes("road") || desc.includes("road")) {
+        iconClass = "fa-road";
+      } else if (t.includes("sidewalk") || desc.includes("sidewalk")) {
+        iconClass = "fa-shoe-prints";
+      } else if (t.includes("water") || desc.includes("water")) {
+        iconClass = "fa-droplet";
+      } else if (t.includes("noise") || desc.includes("noise")) {
+        iconClass = "fa-volume-high";
+      } else if (t.includes("fire") || desc.includes("fire")) {
+        iconClass = "fa-fire";
+      } else if (t.includes("code") || desc.includes("code")) {
+        iconClass = "fa-gavel";
+      } else if (t.includes("sanitation") || desc.includes("sanitation")) {
+        iconClass = "fa-dumpster";
+      }
+      return L.divIcon({
+        className: "",
+        html: `<i class="${faPrefix} ${iconClass}" style="color:${color};font-size:2em;"></i>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+      });
+    }
+
+    // Helper to assign to correct layer
+    function getTypeKey(type, description) {
+      const desc = (description || "").toLowerCase();
+      const t = (type || "").toLowerCase();
+      if (t.includes("pothole") || desc.includes("pothole")) return "Pothole";
+      if (t.includes("graffiti") || desc.includes("graffiti")) return "Graffiti";
+      if (t.includes("light") || desc.includes("light")) return "Streetlight Out";
+      if (t.includes("trash") || t.includes("dump") || desc.includes("trash") || desc.includes("dump")) return "Trash";
+      if (t.includes("vehicle") || desc.includes("vehicle")) return "Abandoned Vehicle";
+      return "Other";
+    }
+
+    // Status filter logic
+    function getActiveStatuses() {
+      return [
+        document.getElementById('filterOpen').checked ? 'Open' : null,
+        document.getElementById('filterClosed').checked ? 'Closed' : null,
+        document.getElementById('filterNew').checked ? 'New' : null
+      ].filter(Boolean);
+    }
+
+    // Show loading spinner
+    const spinner = document.getElementById('loadingSpinner');
+    function hideSpinner() {
+      spinner.classList.add('hide');
+      setTimeout(() => spinner.style.display = 'none', 300);
+    }
+
+    // Load GeoJSON and build layers
+    const allMarkers = [];
+    fetch('../data/service_requests.geojson')
+      .then(res => res.json())
+      .then(data => {
+        // Group features by coordinates
+        const locationMap = new Map();
+        data.features.forEach(feature => {
+          const coords = feature.geometry.coordinates.join(',');
+          if (!locationMap.has(coords)) {
+            locationMap.set(coords, []);
+          }
+          locationMap.get(coords).push(feature);
+        });
+
+        locationMap.forEach((featuresAtLocation, coords) => {
+          const [lng, lat] = coords.split(',').map(Number);
+          // Use the first feature for icon/type
+          const props = featuresAtLocation[0].properties;
+          const typeKey = getTypeKey(props.PLAIN_ENGLISH_NAME_FOR_PROBLEMCODE, props.DESCRIPTION);
+          const marker = L.marker(
+            [lat, lng],
+            {
+              icon: getIcon(props.PLAIN_ENGLISH_NAME_FOR_PROBLEMCODE, props.STATUS, props.DESCRIPTION)
+            }
+          );
+          // Build popup with all requests at this location
+          let popupContent = featuresAtLocation.map(f => {
+            const p = f.properties;
+            return `<b>Description:</b> ${p.DESCRIPTION || "N/A"}<br/>` +
+                   `<b>Address:</b> ${p.PROBADDRESS || "N/A"}<br/>` +
+                   `<b>Status:</b> ${p.STATUS || "N/A"}`;
+          }).join('<hr>');
+          marker.bindPopup(popupContent);
+          marker.featureStatus = props.STATUS;
+          typeLayers[typeKey].addLayer(marker);
+          allMarkers.push(marker);
+        });
+        // Add all layers to map by default
+        Object.values(typeLayers).forEach(function(layer) { layer.addTo(map); });
+        hideSpinner();
+      });
+
+    // Status filter event listeners
+    document.getElementById('filterOpen').addEventListener('change', filterMarkers);
+    document.getElementById('filterClosed').addEventListener('change', filterMarkers);
+    document.getElementById('filterNew').addEventListener('change', filterMarkers);
+
+    function filterMarkers() {
+      const activeStatuses = getActiveStatuses();
+      Object.values(typeLayers).forEach(function(layer) { layer.clearLayers(); });
+      allMarkers.forEach(function(marker) {
+        if (activeStatuses.includes(marker.featureStatus)) {
+          const typeKey = getTypeKeyFromMarker(marker);
+          // Add to correct type layer
+          for (const key in typeLayers) {
+            if (typeLayers[key].hasLayer(marker)) typeLayers[key].removeLayer(marker);
+          }
+          typeLayers[typeKey].addLayer(marker);
+        }
+      });
+    }
+    function getTypeKeyFromMarker(marker) {
+      // Use marker's icon HTML to infer type (not perfect, but works for this demo)
+      const html = marker.options.icon.options.html;
+      if (html.includes('fa-car"')) return "Pothole";
+      if (html.includes('fa-spray-can"')) return "Graffiti";
+      if (html.includes('fa-lightbulb"')) return "Streetlight Out";
+      if (html.includes('fa-trash"')) return "Trash";
+      if (html.includes('fa-car-burst"')) return "Abandoned Vehicle";
+      return "Other";
+    }
+
+    // Animate marker on popup open
+    map.on('popupopen', function(e) {
+      const marker = e.popup._source;
+      if (marker && marker._icon) {
+        marker._icon.classList.add('marker-bounce');
+        setTimeout(() => marker._icon.classList.remove('marker-bounce'), 700);
+      }
+    });
+    // Add marker bounce animation
+    const style = document.createElement('style');
+    style.innerHTML = `.marker-bounce { animation: bounce 0.7s; } @keyframes bounce { 0%{transform:translateY(0);} 30%{transform:translateY(-20px);} 50%{transform:translateY(0);} 70%{transform:translateY(-10px);} 100%{transform:translateY(0);} }`;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html> 
