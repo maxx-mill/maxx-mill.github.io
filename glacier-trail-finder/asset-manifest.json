@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/glacier-trail-finder/static/css/main.879cedf1.css",
+    "main.js": "/glacier-trail-finder/static/js/main.09fb9f71.js",
+    "static/js/453.670e15c7.chunk.js": "/glacier-trail-finder/static/js/453.670e15c7.chunk.js",
+    "index.html": "/glacier-trail-finder/index.html",
+    "main.879cedf1.css.map": "/glacier-trail-finder/static/css/main.879cedf1.css.map",
+    "main.09fb9f71.js.map": "/glacier-trail-finder/static/js/main.09fb9f71.js.map",
+    "453.670e15c7.chunk.js.map": "/glacier-trail-finder/static/js/453.670e15c7.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.879cedf1.css",
+    "static/js/main.09fb9f71.js"
+  ]
+}
