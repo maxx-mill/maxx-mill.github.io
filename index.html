@@ -11,6 +11,8 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <!-- Add Manrope font for a modern, visually appealing look -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #2563eb;
@@ -688,6 +690,61 @@
         .leaflet-control-layers-expanded .leaflet-control-layers-list input[type="checkbox"] {
             margin-right: 5px;
         }
+        /* Modernize font weights and spacing for headings */
+        h1, h2, h3, .section-title h2, .project-title {
+            letter-spacing: -0.5px;
+            font-weight: 700;
+        }
+        .btn {
+            font-family: 'Manrope', 'Inter', sans-serif;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+        }
+        .btn-outline {
+            border-width: 2px;
+        }
+        .project-card.featured {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 8px 32px rgba(37,99,235,0.08);
+            background: linear-gradient(120deg, #f8fafc 60%, #e0e7ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 2rem;
+        }
+        .project-card.featured img {
+            width: 100%;
+            max-width: 340px;
+            border-radius: 14px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.10);
+        }
+        .project-card.featured .project-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+        .project-card.featured .project-description {
+            font-size: 1.15rem;
+            color: #334155;
+            margin-bottom: 1.2rem;
+            text-align: center;
+        }
+        .project-card.featured .project-tags {
+            margin-bottom: 1.2rem;
+        }
+        .project-card.featured .btn {
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 600px) {
+            .project-card.featured {
+                padding: 1.2rem 0.5rem;
+            }
+            .project-card.featured img {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -714,7 +771,7 @@
                     <div>
                         <a href="maps.html" class="btn">View My Maps</a>
                         <a href="https://github.com/maxx-mill" target="_blank" class="btn btn-outline">GitHub Profile</a>
-                        <a href="Maxx Millstein Resume.pdf" class="btn btn-outline" download>Download Resume</a>
+                        <a href="Maxx_Millstein_Resume.pdf" class="btn btn-outline" download>Download Resume</a>
                     </div>
                     <div class="social-links">
                         <a href="https://github.com/maxx-mill" target="_blank" title="GitHub">
@@ -736,24 +793,24 @@
             </div>
             <div class="skills-grid">
                 <div class="skill-card">
-                    <div class="skill-icon">🌐</div>
-                    <div class="skill-name">Web Development</div>
-                    <div class="skill-details">HTML, CSS, JavaScript, React</div>
-                </div>
-                <div class="skill-card">
                     <div class="skill-icon">🗺️</div>
                     <div class="skill-name">GIS & Mapping</div>
-                    <div class="skill-details">ArcGIS, QGIS, Leaflet, Mapbox</div>
+                    <div class="skill-details">ArcGIS, QGIS, PostGIS, ArcPy, OpenStreetMap, Spatial Data Conflation</div>
                 </div>
                 <div class="skill-card">
-                    <div class="skill-icon">🤖</div>
-                    <div class="skill-name">AI & Automation</div>
-                    <div class="skill-details">Python, Machine Learning, RPA</div>
+                    <div class="skill-icon">💻</div>
+                    <div class="skill-name">Programming & Automation</div>
+                    <div class="skill-details">Python, SQL, GDAL, Data Cleaning, Workflow Automation</div>
                 </div>
                 <div class="skill-card">
-                    <div class="skill-icon">📊</div>
-                    <div class="skill-name">Data Analysis</div>
-                    <div class="skill-details">SQL, Python, Data Visualization</div>
+                    <div class="skill-icon">🌐</div>
+                    <div class="skill-name">Web Mapping</div>
+                    <div class="skill-details">Leaflet, OpenLayers, UI/UX Debugging, Git</div>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">🎯</div>
+                    <div class="skill-name">Quality & Leadership</div>
+                    <div class="skill-details">QA/QC, Team Mentorship, Project Guidance, Efficiency Optimization</div>
                 </div>
             </div>
         </div>
@@ -765,15 +822,19 @@
                 <h2>About Me</h2>
             </div>
             <div class="card">
-                <p>Welcome to my portfolio! I'm a GIS Specialist and Web Developer with a passion for creating innovative solutions that combine spatial data analysis with modern web technologies. My experience spans across various industries, from environmental consulting to urban planning, where I've developed expertise in GIS automation, web mapping, and data visualization.</p>
-                <p>My technical skills include:</p>
+                <p>
+                    Geography graduate and GIS specialist with 5+ years of experience in geospatial data processing, quality assurance, and workflow automation. I excel at managing large spatial datasets, streamlining GIS processes, and building web-based mapping solutions that make complex data accessible and actionable.
+                </p>
+                <p>
+                    My technical toolkit includes ArcGIS, QGIS, PostGIS, Python, Leaflet, OpenLayers, and SQL. I have a proven track record of leading teams to exceed production metrics, mentoring new analysts, and delivering high-quality geospatial products for government and private sector clients.
+                </p>
                 <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
-                    <li>Web Development: HTML, CSS, JavaScript, React</li>
-                    <li>GIS & Mapping: ArcGIS, QGIS, Leaflet, Mapbox</li>
-                    <li>Programming: Python, SQL, R</li>
-                    <li>Data Analysis & Visualization: D3.js, Matplotlib, Folium</li>
-                    <li>AI & Automation: Machine Learning, RPA, Process Automation</li>
+                    <li>GIS & Mapping: ArcGIS, QGIS, PostGIS, ArcPy, OSM</li>
+                    <li>Programming & Automation: Python, SQL, GDAL, Data Cleaning</li>
+                    <li>Web Mapping: Leaflet, OpenLayers, UI/UX Debugging</li>
+                    <li>Quality & Leadership: QA/QC, Team Mentorship, Project Guidance</li>
                 </ul>
+                <p style="font-size: 1rem; color: #64748b; margin-bottom: 1rem;">B.A. in Geography (GIS Specialization), Indiana University</p>
                 <a href="maps.html" class="btn">Explore My Map Projects</a>
             </div>
         </div>
@@ -785,6 +846,21 @@
                 <h2>Featured Projects</h2>
             </div>
             <div class="projects-grid">
+                <!-- Glacier National Park Trail Finder Featured Project -->
+                <div class="project-card featured">
+                    <img src="glacier-trail-finder/build/glacier-logo.jpg" alt="Glacier National Park Trail Finder Logo">
+                    <div class="project-content">
+                        <h3 class="project-title">Glacier National Park Trail Finder</h3>
+                        <p class="project-description">Explore Glacier National Park trails with an interactive map, trail details, images, and Google AI overviews. Designed for hikers and explorers to plan their next adventure with ease.</p>
+                        <div class="project-tags">
+                            <span class="project-tag">Leaflet</span>
+                            <span class="project-tag">Trails</span>
+                            <span class="project-tag">Featured</span>
+                        </div>
+                        <a href="glacier-trail-finder/build/index.html" target="_blank" class="btn">View Map</a>
+                        <a href="https://github.com/maxx-mill/Glacier-trail-finder/tree/main" target="_blank" class="btn btn-outline">View Code</a>
+                    </div>
+                </div>
                 <div class="project-card">
                     <div class="project-content">
                         <h3 class="project-title">GIS Process Automation</h3>
